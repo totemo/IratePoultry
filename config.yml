@@ -1,6 +1,13 @@
+debug:
+  death: false
+  remove: false
+  spawn:
+    natural: false
+    reinforcement: false
+
 difficulty:
   # Scaling factor applied to the vanilla creeper blast radius.
-  blastscale: 0.3
+  blastscale: 0.5
 
   # Probability, [0.0, 1.0], that a non-spawner, overworld hostile mob is
   # replaced with a blaze.
@@ -66,9 +73,21 @@ drops:
     name: "&ePumpkin Pie"
     lore: "&6Thanksgiving 2015|&oDessert!"
 
-debug:
-  death: false
-  remove: false
-  spawn:
-    natural: false
-    reinforcement: false
+messages:
+  turkey:
+  - "a foul fowl"
+  - "a very angry bird"
+  - "irate poultry"
+  - "a furious avian assailant"
+  - "an angry avian assailant"
+  - "an enraged maple roast turkey"
+  - "an utterly livid rosemary roasted turkey"
+  - "an indignant turkey pot pie"
+  - "a surly family meal"
+  - "some turkey"
+  - "some punk-ass jive turkey"
+  - "the other, other, other white meat"
+  - "a well-roasted turkey"
+  - "a thoroughly baked turkey"
+  - "a spicy chipotle turkey burger"
+  - "the entire nation of Turkey"

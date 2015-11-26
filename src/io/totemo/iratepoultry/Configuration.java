@@ -1,6 +1,7 @@
 package io.totemo.iratepoultry;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.Plugin;
@@ -10,6 +11,10 @@ import org.bukkit.plugin.Plugin;
  * Reads and exposes the plugin configuration.
  */
 public class Configuration {
+    public boolean DEBUG_DEATH;
+    public boolean DEBUG_REMOVE;
+    public boolean DEBUG_SPAWN_NATURAL;
+    public boolean DEBUG_SPAWN_REINFORCEMENT;
 
     public double BLAZE_CHANCE;
     public double BLAST_RADIUS_SCALE;
@@ -49,10 +54,7 @@ public class Configuration {
     public String DROPS_PUMPKIN_PIE_NAME;
     public ArrayList<String> DROPS_PUMPKIN_PIE_LORE;
 
-    public boolean DEBUG_DEATH;
-    public boolean DEBUG_REMOVE;
-    public boolean DEBUG_SPAWN_NATURAL;
-    public boolean DEBUG_SPAWN_REINFORCEMENT;
+    public List<String> MESSAGES_TURKEY;
 
     // ------------------------------------------------------------------------
     /**
@@ -70,6 +72,12 @@ public class Configuration {
      */
     public void reload() {
         _plugin.reloadConfig();
+
+        DEBUG_DEATH = _plugin.getConfig().getBoolean("debug.death", false);
+        DEBUG_REMOVE = _plugin.getConfig().getBoolean("debug.remove", false);
+        DEBUG_SPAWN_NATURAL = _plugin.getConfig().getBoolean("debug.spawn.natural", false);
+        DEBUG_SPAWN_REINFORCEMENT = _plugin.getConfig().getBoolean("debug.spawn.reinforcement", false);
+
         BLAZE_CHANCE = _plugin.getConfig().getDouble("difficulty.blaze.chance", 0.1);
         BLAST_RADIUS_SCALE = _plugin.getConfig().getDouble("difficulty.blastscale", 0.3);
         MIN_REINFORCEMENTS = _plugin.getConfig().getInt("reinforcements.min", 1);
@@ -108,10 +116,7 @@ public class Configuration {
         DROPS_PUMPKIN_PIE_NAME = _plugin.getConfig().getString("drops.pumpkin_pie.name", "Pumpkin Pie");
         DROPS_PUMPKIN_PIE_LORE = loadAndTranslateLore("drops.pumpkin_pie.lore");
 
-        DEBUG_DEATH = _plugin.getConfig().getBoolean("debug.death", false);
-        DEBUG_REMOVE = _plugin.getConfig().getBoolean("debug.remove", false);
-        DEBUG_SPAWN_NATURAL = _plugin.getConfig().getBoolean("debug.spawn.natural", false);
-        DEBUG_SPAWN_REINFORCEMENT = _plugin.getConfig().getBoolean("debug.spawn.reinforcement", false);
+        MESSAGES_TURKEY = _plugin.getConfig().getStringList("messages.turkey");
     } // reload
 
     // ------------------------------------------------------------------------
@@ -129,15 +134,6 @@ public class Configuration {
             loreList.add(ChatColor.translateAlternateColorCodes('&', lore));
         }
         return loreList;
-    }
-
-    // ------------------------------------------------------------------------
-
-    public static void main(String[] args) {
-        String[] parts = "&6Thanksgiving 2015|&oYou knocked the stuffing out of it!".split("\\|");
-        for (String part : parts) {
-            System.out.println(part);
-        }
     }
 
     // ------------------------------------------------------------------------

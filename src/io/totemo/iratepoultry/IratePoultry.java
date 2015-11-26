@@ -1,6 +1,8 @@
 package io.totemo.iratepoultry;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import me.libraryaddict.disguise.DisguiseAPI;
 import me.libraryaddict.disguise.disguisetypes.DisguiseType;
@@ -16,15 +18,19 @@ import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Blaze;
 import org.bukkit.entity.Egg;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Skeleton;
+import org.bukkit.entity.SmallFireball;
 import org.bukkit.entity.Spider;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
@@ -34,6 +40,7 @@ import org.bukkit.event.entity.EntityEvent;
 import org.bukkit.event.entity.EntityPortalEnterEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
@@ -194,6 +201,37 @@ public class IratePoultry extends JavaPlugin implements Listener {
             removeDisguisedMobs(chunk);
         }
     }
+
+    // ------------------------------------------------------------------------
+    /**
+     * Post-process death messages to replace hostile mob type names with the
+     * word "Turkey".
+     */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (!isInOverworld(event)) {
+            return;
+        }
+
+        Player player = event.getEntity();
+        String randomAttacker = getRandomMobName();
+        if (player.getLastDamageCause() instanceof EntityDamageByEntityEvent) {
+            EntityDamageByEntityEvent lastDamageEvent = (EntityDamageByEntityEvent) player.getLastDamageCause();
+            Entity damager = lastDamageEvent.getDamager();
+            if (isDisguised(damager)) {
+                getLogger().info("Disguised attacker");
+                Pattern pattern = Pattern.compile(damager.getType().name(), Pattern.CASE_INSENSITIVE);
+                Matcher m = pattern.matcher(event.getDeathMessage());
+                event.setDeathMessage(m.replaceAll(randomAttacker));
+            } else if (damager instanceof SmallFireball) {
+                SmallFireball projectile = (SmallFireball) damager;
+                ProjectileSource shooter = projectile.getShooter();
+                if (shooter instanceof Blaze && isDisguised((Blaze) shooter)) {
+                    event.setDeathMessage(event.getDeathMessage().replaceAll("Blaze", randomAttacker));
+                }
+            }
+        }
+    } // onPlayerDeath
 
     // ------------------------------------------------------------------------
     /**
@@ -571,6 +609,11 @@ public class IratePoultry extends JavaPlugin implements Listener {
         mob.setMetadata(DISGUISED, DISGUISED_META);
         MobDisguise disguise = new MobDisguise(DisguiseType.CHICKEN, isAdult);
         DisguiseAPI.disguiseToAll(mob, disguise);
+        if (mob instanceof Monster) {
+            // Don't let disguised mobs pick up player gear. Players won't
+            // easily find it, and the mob will be removed on restart.
+            ((Monster) mob).setCanPickupItems(false);
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -601,6 +644,9 @@ public class IratePoultry extends JavaPlugin implements Listener {
     /**
      * Remove all disguised mobs in the specified chunk.
      *
+     * This method is called when the chunk is unloaded, or when the plugin is
+     * disabled at restart.
+     *
      * @param chunk the chunk.
      */
     protected void removeDisguisedMobs(Chunk chunk) {
@@ -614,6 +660,17 @@ public class IratePoultry extends JavaPlugin implements Listener {
                 }
             }
         }
+    }
+
+    // ------------------------------------------------------------------------
+    /**
+     * Return a randomly selected name for a disguised mob.
+     *
+     * @return a randomly selected name for a disguised mob.
+     */
+    protected String getRandomMobName() {
+        int index = random(0, _config.MESSAGES_TURKEY.size() - 1);
+        return _config.MESSAGES_TURKEY.get(index);
     }
 
     // ------------------------------------------------------------------------
