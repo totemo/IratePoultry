@@ -1,0 +1,74 @@
+difficulty:
+  # Scaling factor applied to the vanilla creeper blast radius.
+  blastscale: 0.3
+
+  # Probability, [0.0, 1.0], that a non-spawner, overworld hostile mob is
+  # replaced with a blaze.
+  blaze:
+    chance: 0.1
+
+reinforcements:
+  # Minimum and maximum number of reinforcements spawned on creeper detonation.
+  min: 1
+  max: 3
+
+  # Distance (blocks) of spawned reinforcement from detonation.
+  range: 2.0
+
+  # Magnitude of initial velocity given to spawned reinforcement.
+  velocity:
+    min: 0.0
+    max: 2.0
+
+  # Chance that an egg launched by a disguised skeleton will spawn a
+  # reinforcement.
+  egg:
+    chance: 0.125
+
+# Chance values express the base probability, [0.0, 1.0], of dropping an item.
+# Probability is increased by 1% per looting level.
+drops:
+  feather:
+    chance: 0.4
+    name: "&eTurkey Feather"
+    lore: "&6Thanksgiving 2015"
+
+  egg:
+    chance: 0.2
+    name: "&eTurkey Egg"
+    lore: "&6Thanksgiving 2015"
+
+  corpse:
+    chance: 0.2
+    name:
+      raw: "&eA Dead Angry Bird"
+      cooked: "&eCooked Turkey"
+
+    lore: "&6Thanksgiving 2015|&oDon't let the turkeys get you down!"
+
+  wishbone:
+    chance: 0.025
+    name: "&eWishbone"
+    lore: "&6Thanksgiving 2015|&oMake a wish!"
+
+  stuffing:
+    chance: 0.2
+    name: "&eStuffing"
+    lore: "&6Thanksgiving 2015|&oYou knocked the stuffing out of it!"
+
+  cranberry_sauce:
+    chance: 0.08
+    name: "&eCranberry Sauce"
+    lore: "&6Thanksgiving 2015|&oTime to hit the sauce!"
+
+  pumpkin_pie:
+    chance: 0.2
+    name: "&ePumpkin Pie"
+    lore: "&6Thanksgiving 2015|&oDessert!"
+
+debug:
+  death: false
+  remove: false
+  spawn:
+    natural: false
+    reinforcement: false

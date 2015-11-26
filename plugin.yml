@@ -1,0 +1,17 @@
+name: IratePoultry
+version: 0.1.0
+author: totemo
+description: Turns naturally spawned, hostile, overworld mobs into angry birds.
+website: http://github.com/totemo/IratePoultry
+depend: [LibsDisguises]
+main: io.totemo.iratepoultry.IratePoultry
+permissions:
+  iratepoultry.admin:
+    description: Permission to administer the plugin.
+    default: op
+commands:
+  iratepoultry:
+    description: Main plugin command.
+    permission: iratepoultry.admin
+    usage: |
+      /<command> reload: Reload the configuration.
