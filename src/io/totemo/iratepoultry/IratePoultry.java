@@ -578,8 +578,13 @@ public class IratePoultry extends JavaPlugin implements Listener {
 
             // In order to hide the true actual spawned mob until LibsDisguises
             // can catch up and disguise it, spawn with invisibility for 5
-            // ticks.
+            // ticks. Also, since LibsDisguises sometimes spawns disguises
+            // invisible for the first few seconds (irrespective of the potion
+            // effect), make the mobs slow and weak for a few seconds to give
+            // players a chance.
             reinforcement.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 5, 1, false, false));
+            reinforcement.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 20, false, false));
+            reinforcement.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 2, false, false));
 
             ParticleEffect.EXPLOSION_NORMAL.display(0, 0, 0, 0, 10, loc, 32);
 
