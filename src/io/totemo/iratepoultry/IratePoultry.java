@@ -177,7 +177,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
 
     // ------------------------------------------------------------------------
     /**
-     * When a chunk is unloaded, we remove all the disguised mob, since neither
+     * When a chunk is unloaded, we remove all the disguised mobs, since neither
      * metadata nor disguises persist.
      *
      * Server restarts do not trigger chunk unload events, however.
@@ -204,8 +204,8 @@ public class IratePoultry extends JavaPlugin implements Listener {
 
     // ------------------------------------------------------------------------
     /**
-     * Post-process death messages to replace hostile mob type names with the
-     * word "Turkey".
+     * Post-process death messages to replace hostile mob type names with a
+     * coonfigurable mob name.
      */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerDeath(PlayerDeathEvent event) {
@@ -219,7 +219,6 @@ public class IratePoultry extends JavaPlugin implements Listener {
             EntityDamageByEntityEvent lastDamageEvent = (EntityDamageByEntityEvent) player.getLastDamageCause();
             Entity damager = lastDamageEvent.getDamager();
             if (isDisguised(damager)) {
-                getLogger().info("Disguised attacker");
                 Pattern pattern = Pattern.compile(damager.getType().name(), Pattern.CASE_INSENSITIVE);
                 Matcher m = pattern.matcher(event.getDeathMessage());
                 event.setDeathMessage(m.replaceAll(randomAttacker));
@@ -282,14 +281,13 @@ public class IratePoultry extends JavaPlugin implements Listener {
             return;
         }
 
-        if (event.getEntityType() == EntityType.CREEPER) {
-            // Apply scaling factor to blast radius.
+        Entity entity = event.getEntity();
+        if (entity.getType() == EntityType.CREEPER && isDisguised(entity)) {
             event.setRadius((float) _config.BLAST_RADIUS_SCALE * event.getRadius());
 
-            Entity creeper = event.getEntity();
-            launchReinforcements(creeper);
+            launchReinforcements(entity);
 
-            Location loc = event.getEntity().getLocation();
+            Location loc = entity.getLocation();
             loc.getWorld().playSound(loc, Sound.CHICKEN_HURT, 1, 1);
         }
     }
@@ -305,7 +303,6 @@ public class IratePoultry extends JavaPlugin implements Listener {
             return;
         }
 
-        // Check that the entity is disguised.
         Entity entity = event.getEntity();
         if (isDisguised(entity)) {
             handleDeath(entity);
