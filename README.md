@@ -21,7 +21,8 @@ of all custom drops per enchantment level.
 
 IratePoultry alters player death messages so that disguised mobs are referred
 to as turkeys (with configurable names) in a manner that is compatible with
-custom death messages supplied by [MaskOfFutures](http://github.com/buzzie71/MaskOfFutures).
+custom death messages supplied by buzzie71's
+[MaskOfFutures](http://github.com/buzzie71/MaskOfFutures).
 
 Dungeon spawner mobs and those mobs not in the overworld are *not* affected by the
 above mechanics.
@@ -66,7 +67,7 @@ in testing but not so well in production.  The reason is currently unknown.
 
 IratePoultry also inherits any currently open issues from Lib's Disguises.  In
 practice, we have observed that some
-[https://github.com/libraryaddict/LibsDisguises/issues/59 disguised mobs are invisible].
+[disguised mobs are invisible](https://github.com/libraryaddict/LibsDisguises/issues/59).
 Lib's Disguises reputedly re-sends disguise entities to clients periodically to
 fix this.  However, we found that blazes had a tendency to stay invisble
 indefinitely.  Disguised spiders spawned from creeper explosions were also
