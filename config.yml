@@ -41,12 +41,12 @@ drops:
     lore: "&6Thanksgiving 2015"
 
   egg:
-    chance: 0.2
+    chance: 0.1
     name: "&eTurkey Egg"
     lore: "&6Thanksgiving 2015"
 
   corpse:
-    chance: 0.2
+    chance: 0.1
     name:
       raw: "&eA Dead Angry Bird"
       cooked: "&eCooked Turkey"
@@ -59,17 +59,17 @@ drops:
     lore: "&6Thanksgiving 2015|&oMake a wish!"
 
   stuffing:
-    chance: 0.2
+    chance: 0.1
     name: "&eStuffing"
     lore: "&6Thanksgiving 2015|&oYou knocked the stuffing out of it!"
 
   cranberry_sauce:
-    chance: 0.08
+    chance: 0.05
     name: "&eCranberry Sauce"
     lore: "&6Thanksgiving 2015|&oTime to hit the sauce!"
 
   pumpkin_pie:
-    chance: 0.2
+    chance: 0.1
     name: "&ePumpkin Pie"
     lore: "&6Thanksgiving 2015|&oDessert!"
 
