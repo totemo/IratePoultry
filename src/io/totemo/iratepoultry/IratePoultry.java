@@ -43,10 +43,11 @@ import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.potion.Potion;
+import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
@@ -470,8 +471,10 @@ public class IratePoultry extends JavaPlugin implements Listener {
             }
 
             if (Math.random() < _config.DROPS_CRANBERRY_SAUCE_CHANCE + lootingBoost) {
-                @SuppressWarnings("deprecation")
-                ItemStack cranberrySauce = new Potion(PotionType.INSTANT_HEAL, 2).toItemStack(1);
+                ItemStack cranberrySauce = new ItemStack(Material.POTION, 1);
+                PotionMeta meta = (PotionMeta) cranberrySauce.getItemMeta();
+                meta.setBasePotionData(new PotionData(PotionType.INSTANT_HEAL, false, true));
+                cranberrySauce.setItemMeta(meta);
                 setItemNameAndLore(cranberrySauce, _config.DROPS_CRANBERRY_SAUCE_NAME, _config.DROPS_CRANBERRY_SAUCE_LORE);
                 drops.add(cranberrySauce);
             }
