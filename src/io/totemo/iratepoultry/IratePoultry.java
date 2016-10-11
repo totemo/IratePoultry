@@ -4,13 +4,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import me.libraryaddict.disguise.DisguiseAPI;
-import me.libraryaddict.disguise.disguisetypes.DisguiseType;
-import me.libraryaddict.disguise.disguisetypes.MobDisguise;
-
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
+import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -56,7 +53,9 @@ import org.bukkit.potion.PotionType;
 import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.util.Vector;
 
-import com.darkblade12.particleeffect.ParticleEffect;
+import me.libraryaddict.disguise.DisguiseAPI;
+import me.libraryaddict.disguise.disguisetypes.DisguiseType;
+import me.libraryaddict.disguise.disguisetypes.MobDisguise;
 
 // ----------------------------------------------------------------------------
 /**
@@ -246,13 +245,16 @@ public class IratePoultry extends JavaPlugin implements Listener {
         }
 
         Entity entity = event.getEntity();
+        Location loc = entity.getLocation();
+        loc.getWorld().spigot().playEffect(loc, Effect.COLOURED_DUST, 0, 0, 0.5f, 0.5f, 0.5f, 0, 10, 32);
+
         if (entity.hasMetadata(DISGUISED)) {
             int lootingLevel = 0;
             boolean isPlayerAttack = false;
             if (event.getDamager() instanceof Player) {
                 isPlayerAttack = true;
                 Player player = (Player) event.getDamager();
-                lootingLevel = player.getItemInHand().getEnchantmentLevel(Enchantment.LOOT_BONUS_MOBS);
+                lootingLevel = player.getEquipment().getItemInMainHand().getEnchantmentLevel(Enchantment.LOOT_BONUS_MOBS);
             } else if (event.getDamager() instanceof Projectile) {
                 Projectile projectile = (Projectile) event.getDamager();
                 if (projectile.getShooter() instanceof Player) {
@@ -288,7 +290,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
             launchReinforcements(entity);
 
             Location loc = entity.getLocation();
-            loc.getWorld().playSound(loc, Sound.CHICKEN_HURT, 1, 1);
+            loc.getWorld().playSound(loc, Sound.ENTITY_CHICKEN_HURT, 1, 1);
         }
     }
 
@@ -413,8 +415,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
      */
     protected void handleDeath(Entity mob) {
         Location loc = mob.getLocation();
-        ParticleEffect.EXPLOSION_NORMAL.display(0, 0, 0, 0, 10, loc, 32);
-        ParticleEffect.REDSTONE.display(0.3f, 0.3f, 0.3f, 0, 20, loc, 32);
+        loc.getWorld().spigot().playEffect(loc, Effect.EXPLOSION, 0, 0, 0.5f, 0.5f, 0.5f, 0, 10, 32);
         removeDisguise(mob);
 
         if (_config.DEBUG_DEATH) {
@@ -469,6 +470,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
             }
 
             if (Math.random() < _config.DROPS_CRANBERRY_SAUCE_CHANCE + lootingBoost) {
+                @SuppressWarnings("deprecation")
                 ItemStack cranberrySauce = new Potion(PotionType.INSTANT_HEAL, 2).toItemStack(1);
                 setItemNameAndLore(cranberrySauce, _config.DROPS_CRANBERRY_SAUCE_NAME, _config.DROPS_CRANBERRY_SAUCE_LORE);
                 drops.add(cranberrySauce);
@@ -583,7 +585,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
             reinforcement.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 20, false, false));
             reinforcement.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 2, false, false));
 
-            ParticleEffect.EXPLOSION_NORMAL.display(0, 0, 0, 0, 10, loc, 32);
+            loc.getWorld().spigot().playEffect(loc, Effect.EXPLOSION, 0, 0, 0.5f, 0.5f, 0.5f, 0, 10, 32);
 
             if (_config.DEBUG_SPAWN_REINFORCEMENT) {
                 getLogger().info("Spawning reinforcement " + reinforcement.getType() +
