@@ -36,14 +36,6 @@ You will need to install compatible versions of
 [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/)
 to use IratePoultry.
 
-IratePoultry depends on a recent build of Lib's Disguises.  It has been tested
-using build 53 from http://server.psmc.ca/repo/.  Lib's Disguises, in turn,
-depends on a version of ProtocolLib that is compatible with the server version.
-
-IratePoultry also includes classes from DarkBlade12's
-[ParticleEffect](https://github.com/DarkBlade12/ParticleEffect) library in the
-built plugin JAR using the Maven Shade plugin.
-
 
 Building
 --------
@@ -71,7 +63,8 @@ practice, we have observed that some
 Lib's Disguises reputedly re-sends disguise entities to clients periodically to
 fix this.  However, we found that blazes had a tendency to stay invisble
 indefinitely.  Disguised spiders spawned from creeper explosions were also
-frequently observed to be invisible when not expected to be so.
+frequently observed to be invisible when not expected to be so.  The damage 
+sound of disguised mobs is sometimes not properly disguised.
 
 Reinforcement mobs (such as the disguised spiders spawned in creeper explosions)
 were also sometimes visible *undisguised* (as spiders) for a fraction of a
