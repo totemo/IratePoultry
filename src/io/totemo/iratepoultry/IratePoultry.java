@@ -78,7 +78,8 @@ import me.libraryaddict.disguise.disguisetypes.MobDisguise;
  * <li>Disguised skeletons shoot eggs that hatch more hostile mobs, which are
  * also disguised as baby chickens.</li>
  * <li>For disguised mobs to drop special drops when they die, they must have
- * been recently hurt by a player.</li>
+ * been recently hurt by a player, and they must not be reinforcement mobs
+ * (those spawned in by skeleton projectiles or creeper explosions).</li>
  * </ul>
  */
 public class IratePoultry extends JavaPlugin implements Listener {
@@ -90,6 +91,9 @@ public class IratePoultry extends JavaPlugin implements Listener {
     public void onEnable() {
         if (DISGUISED_META == null) {
             DISGUISED_META = new FixedMetadataValue(this, null);
+        }
+        if (REINFORCEMENT_META == null) {
+            REINFORCEMENT_META = new FixedMetadataValue(this, null);
         }
 
         _overworld = Bukkit.getWorld("world");
@@ -127,7 +131,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
      * skeletons and zombies as chickens.
      *
      * Also, replace a percentage of these mobs with blazes. Disguised mobs are
-     * tagged with the DISGUISED metadata.
+     * tagged with the DISGUISED_KEY metadata.
      *
      * Spawner-spawned mobs are not affected in any way.
      */
@@ -204,36 +208,6 @@ public class IratePoultry extends JavaPlugin implements Listener {
 
     // ------------------------------------------------------------------------
     /**
-     * Post-process death messages to replace hostile mob type names with a
-     * coonfigurable mob name.
-     */
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerDeath(PlayerDeathEvent event) {
-        if (!isInOverworld(event)) {
-            return;
-        }
-
-        Player player = event.getEntity();
-        String randomAttacker = getRandomMobName();
-        if (player.getLastDamageCause() instanceof EntityDamageByEntityEvent) {
-            EntityDamageByEntityEvent lastDamageEvent = (EntityDamageByEntityEvent) player.getLastDamageCause();
-            Entity damager = lastDamageEvent.getDamager();
-            if (isDisguised(damager)) {
-                Pattern pattern = Pattern.compile(damager.getType().name(), Pattern.CASE_INSENSITIVE);
-                Matcher m = pattern.matcher(event.getDeathMessage());
-                event.setDeathMessage(m.replaceAll(randomAttacker));
-            } else if (damager instanceof SmallFireball) {
-                SmallFireball projectile = (SmallFireball) damager;
-                ProjectileSource shooter = projectile.getShooter();
-                if (shooter instanceof Blaze && isDisguised((Blaze) shooter)) {
-                    event.setDeathMessage(event.getDeathMessage().replaceAll("Blaze", randomAttacker));
-                }
-            }
-        }
-    } // onPlayerDeath
-
-    // ------------------------------------------------------------------------
-    /**
      * Tag disguised mobs hurt by players.
      *
      * Only those disguised mobs hurt recently by players will have special
@@ -247,9 +221,9 @@ public class IratePoultry extends JavaPlugin implements Listener {
 
         Entity entity = event.getEntity();
         Location loc = entity.getLocation();
-        loc.getWorld().spigot().playEffect(loc, Effect.COLOURED_DUST, 0, 0, 0.5f, 0.5f, 0.5f, 0, 10, 32);
+        loc.getWorld().spigot().playEffect(loc, Effect.TILE_DUST, 214, 0, 0.5f, 0.5f, 0.5f, 0, 20, 32);
 
-        if (entity.hasMetadata(DISGUISED)) {
+        if (isDisguised(entity)) {
             int lootingLevel = 0;
             boolean isPlayerAttack = false;
             if (event.getDamager() instanceof Player) {
@@ -312,12 +286,14 @@ public class IratePoultry extends JavaPlugin implements Listener {
 
             int lootingLevel = getLootingLevelMeta(entity);
             boolean specialDrops = false;
-            Long damageTime = getPlayerDamageTime(entity);
-            if (damageTime != null) {
-                Location loc = entity.getLocation();
-                World world = loc.getWorld();
-                if (world.getFullTime() - damageTime < PLAYER_DAMAGE_TICKS) {
-                    specialDrops = true;
+            if (!isReinforcement(entity)) {
+                Long damageTime = getPlayerDamageTime(entity);
+                if (damageTime != null) {
+                    Location loc = entity.getLocation();
+                    World world = loc.getWorld();
+                    if (world.getFullTime() - damageTime < PLAYER_DAMAGE_TICKS) {
+                        specialDrops = true;
+                    }
                 }
             }
 
@@ -366,6 +342,95 @@ public class IratePoultry extends JavaPlugin implements Listener {
                 }
             }
         }
+    }
+
+    // ------------------------------------------------------------------------
+    /**
+     * Post-process death messages to replace hostile mob type names with a
+     * coonfigurable mob name.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (!isInOverworld(event)) {
+            return;
+        }
+
+        Player player = event.getEntity();
+        if (player.getLastDamageCause() instanceof EntityDamageByEntityEvent) {
+            EntityDamageByEntityEvent lastDamageEvent = (EntityDamageByEntityEvent) player.getLastDamageCause();
+            Entity damager = lastDamageEvent.getDamager();
+            if (isDisguised(damager)) {
+                modifyDeathMessage(event, damager.getType().name());
+            } else if (damager instanceof SmallFireball) {
+                SmallFireball projectile = (SmallFireball) damager;
+                ProjectileSource shooter = projectile.getShooter();
+                if (shooter instanceof Blaze && isDisguised((Blaze) shooter)) {
+                    modifyDeathMessage(event, "Blaze");
+                }
+            }
+        }
+    } // onPlayerDeath
+
+    // ------------------------------------------------------------------------
+    /**
+     * Modify the death message in the specified PlayerDeathEvent, replacing the
+     * named killer mob with a random name for the damager.
+     *
+     * @param event the PlayerDeathEvent.
+     * @param killerName the type of the mob doing the killing, as a String.
+     */
+    protected void modifyDeathMessage(PlayerDeathEvent event, String killerName) {
+        String originalMessage = event.getDeathMessage();
+        if (originalMessage == null) {
+            return;
+        }
+        String randomName = getRandomMobName();
+        Pattern pattern = Pattern.compile(killerName, Pattern.CASE_INSENSITIVE);
+        Matcher m = pattern.matcher(originalMessage);
+        StringBuffer newMessage = new StringBuffer();
+        int lastMatchEnd = 0;
+        while (m.find()) {
+            // Capitalise killer's name if it begins the message, ignoring
+            // leading colour codes.
+            String leading = originalMessage.substring(lastMatchEnd, m.start());
+            boolean atStart = (lastMatchEnd == 0) &&
+                              isAllFormattingCodes(leading);
+
+            newMessage.append(leading);
+            if (atStart) {
+                newMessage.append(Character.toUpperCase(randomName.charAt(0)) + randomName.substring(1));
+            } else {
+                newMessage.append(randomName);
+            }
+            lastMatchEnd = m.end();
+        }
+        newMessage.append(originalMessage.substring(lastMatchEnd));
+        event.setDeathMessage(newMessage.toString());
+    }
+
+    // ------------------------------------------------------------------------
+    /**
+     * Return true if the specified string consists exclusively of 2-character
+     * Minecraft formatting codes.
+     *
+     * The character after the paragraph mark is not checked for validity. If
+     * the string is of even length and has paragraph markers in all the even
+     * character indices, it is considered to contain only formating codes.
+     *
+     * @param s the string.
+     * @return true if the string contains only formatting codes.
+     */
+    protected static boolean isAllFormattingCodes(String s) {
+        if ((s.length() & 1) != 0) {
+            return false;
+        }
+
+        for (int i = 0; i < s.length(); i += 2) {
+            if (s.charAt(i) != '§') {
+                return false;
+            }
+        }
+        return true;
     }
 
     // ------------------------------------------------------------------------
@@ -575,8 +640,9 @@ public class IratePoultry extends JavaPlugin implements Listener {
         World world = loc.getWorld();
         Spider reinforcement = (Spider) world.spawnEntity(loc, EntityType.SPIDER);
         if (reinforcement != null) {
-            // Disguise the reinforcement as a baby chicken.
+            // Disguise reinforcement as baby chicken; tag as reinforcement.
             addDisguise(reinforcement, false);
+            reinforcement.setMetadata(REINFORCEMENT_KEY, REINFORCEMENT_META);
 
             // In order to hide the true actual spawned mob until LibsDisguises
             // can catch up and disguise it, spawn with invisibility for 5
@@ -613,7 +679,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
      *        a baby.
      */
     protected void addDisguise(Entity mob, boolean isAdult) {
-        mob.setMetadata(DISGUISED, DISGUISED_META);
+        mob.setMetadata(DISGUISED_KEY, DISGUISED_META);
         MobDisguise disguise = new MobDisguise(DisguiseType.CHICKEN, isAdult);
         DisguiseAPI.disguiseToAll(mob, disguise);
         if (mob instanceof Monster) {
@@ -632,7 +698,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
     protected void removeDisguise(Entity mob) {
         if (isDisguised(mob)) {
             DisguiseAPI.undisguiseToAll(mob);
-            mob.removeMetadata(DISGUISED, this);
+            mob.removeMetadata(DISGUISED_KEY, this);
         }
     }
 
@@ -644,7 +710,18 @@ public class IratePoultry extends JavaPlugin implements Listener {
      * @return true if the specified mob is disguised as a chicken.
      */
     protected boolean isDisguised(Entity mob) {
-        return mob.hasMetadata(DISGUISED);
+        return mob.hasMetadata(DISGUISED_KEY);
+    }
+
+    // ------------------------------------------------------------------------
+    /**
+     * Return true if the specified mob is a reinforcement.
+     *
+     * @param mob the mob.
+     * @return true if the specified mob is a reinforcement.
+     */
+    protected boolean isReinforcement(Entity mob) {
+        return mob.hasMetadata(REINFORCEMENT_KEY);
     }
 
     // ------------------------------------------------------------------------
@@ -719,12 +796,22 @@ public class IratePoultry extends JavaPlugin implements Listener {
     /**
      * Metadata name used to tag mobs disguised entities, including mobs.
      */
-    protected static final String DISGUISED = "IratePoultry_Disguised";
+    protected static final String DISGUISED_KEY = "IratePoultry_Disguised";
+
+    /**
+     * Metadata name used to tag mobs disguised entities, including mobs.
+     */
+    protected static final String REINFORCEMENT_KEY = "IratePoultry_Reinforcement";
 
     /**
      * Shared metadata value for all disguised entities.
      */
     protected static FixedMetadataValue DISGUISED_META;
+
+    /**
+     * Shared metadata value for all reinforcement entities.
+     */
+    protected static FixedMetadataValue REINFORCEMENT_META;
 
     /**
      * Metadata name used for metadata stored on mobs to record last damage time

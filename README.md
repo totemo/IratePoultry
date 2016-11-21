@@ -11,13 +11,16 @@ exacting revenge for the slaughter of their avian comrades.
 Disguised skeletons shoot eggs rather than arrows, and a configurable percentage
 of those eggs hatch into spiders disguised as baby chickens.  Disguised creepers
 do a configurable fraction of their normal damage and spawn a configurable
-number of spiders disguised as baby chickens that attack the player.
+number of spiders disguised as baby chickens that attack the player.  In both
+cases, these baby chickens are called "reinforcements" and these mobs cannot
+drop "special tier" custom drops (wishbone, stuffing, cranberry sauce and
+pumpkin pie).
 
 Various custom drops are given when a turkey (disguised mob) is killed. These
 are somewhat configurable, in terms of their drop chance, name and lore.  Certain
-custom drops are considered "high value" and can only be dropped if the mob was
-recently damaged by a player.  The Looting enchant adds 1% to the drop chance
-of all custom drops per enchantment level.
+custom drops are considered "special" ("high value") and can only be dropped if
+the mob was recently damaged by a player.  The Looting enchant adds 1% to the
+drop chance of all custom drops per enchantment level.
 
 IratePoultry alters player death messages so that disguised mobs are referred
 to as turkeys (with configurable names) in a manner that is compatible with
