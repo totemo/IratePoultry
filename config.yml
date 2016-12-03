@@ -36,17 +36,17 @@ reinforcements:
 # Probability is increased by 1% per looting level.
 drops:
   feather:
-    chance: 0.4
+    chance: 0.1
     name: "&eTurkey Feather"
     lore: "&6Thanksgiving 2016"
 
   egg:
-    chance: 0.1
+    chance: 0.05
     name: "&eTurkey Egg"
     lore: "&6Thanksgiving 2016"
 
   corpse:
-    chance: 0.1
+    chance: 0.05
     name:
       raw: "&eA Dead Angry Bird"
       cooked: "&eCooked Turkey"
@@ -59,17 +59,17 @@ drops:
     lore: "&6Thanksgiving 2016|&oMake a wish!"
 
   stuffing:
-    chance: 0.1
+    chance: 0.05
     name: "&eStuffing"
     lore: "&6Thanksgiving 2016|&oYou knocked the stuffing out of it!"
 
   cranberry_sauce:
-    chance: 0.05
+    chance: 0.01
     name: "&eCranberry Sauce"
     lore: "&6Thanksgiving 2016|&oTime to hit the sauce!"
 
   pumpkin_pie:
-    chance: 0.1
+    chance: 0.05
     name: "&ePumpkin Pie"
     lore: "&6Thanksgiving 2016|&oDessert!"
 
