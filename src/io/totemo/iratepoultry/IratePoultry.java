@@ -1,6 +1,9 @@
 package io.totemo.iratepoultry;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,9 +19,11 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Blaze;
+import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Egg;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
@@ -29,6 +34,7 @@ import org.bukkit.entity.Spider;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -36,6 +42,8 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityEvent;
 import org.bukkit.event.entity.EntityPortalEnterEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.entity.EntityTargetEvent;
+import org.bukkit.event.entity.EntityTargetEvent.TargetReason;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
@@ -75,6 +83,7 @@ import me.libraryaddict.disguise.disguisetypes.MobDisguise;
  * <li>When a disguised creeper explodes, a configurable number of hostile mobs
  * are spawned and launched away from the explosion. These hostile mobs are
  * disguised as baby chickens.</li>
+ * <li>Since
  * <li>Disguised skeletons shoot eggs that hatch more hostile mobs, which are
  * also disguised as baby chickens.</li>
  * <li>For disguised mobs to drop special drops when they die, they must have
@@ -100,7 +109,24 @@ public class IratePoultry extends JavaPlugin implements Listener {
 
         saveDefaultConfig();
         _config.reload();
+
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+            @Override
+            public void run() {
+                showCreeperEffects();
+            }
+        }, 4, 4);
+
         getServer().getPluginManager().registerEvents(this, this);
+    }
+
+    // ------------------------------------------------------------------------
+    /**
+     * @see org.bukkit.plugin.java.JavaPlugin#onDisable()
+     */
+    @Override
+    public void onDisable() {
+        Bukkit.getScheduler().cancelTasks(this);
     }
 
     // ------------------------------------------------------------------------
@@ -136,7 +162,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
      * Spawner-spawned mobs are not affected in any way.
      */
     @EventHandler(ignoreCancelled = true)
-    public void onCreatureSpawn(CreatureSpawnEvent event) {
+    protected void onCreatureSpawn(CreatureSpawnEvent event) {
         if (!isInOverworld(event)) {
             return;
         }
@@ -167,7 +193,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
      * They die.
      */
     @EventHandler(ignoreCancelled = true)
-    public void onEntityPortalEnter(EntityPortalEnterEvent event) {
+    protected void onEntityPortalEnter(EntityPortalEnterEvent event) {
         if (!isInOverworld(event)) {
             return;
         }
@@ -187,7 +213,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
      * Server restarts do not trigger chunk unload events, however.
      */
     @EventHandler(ignoreCancelled = true)
-    public void onChunkUnload(ChunkUnloadEvent event) {
+    protected void onChunkUnload(ChunkUnloadEvent event) {
         if (event.getWorld() != _overworld) {
             return;
         }
@@ -200,7 +226,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
      * chunks.
      */
     @EventHandler(ignoreCancelled = true)
-    public void onPluginDisable(@SuppressWarnings("unused") PluginDisableEvent event) {
+    protected void onPluginDisable(@SuppressWarnings("unused") PluginDisableEvent event) {
         for (Chunk chunk : _overworld.getLoadedChunks()) {
             removeDisguisedMobs(chunk);
         }
@@ -214,16 +240,16 @@ public class IratePoultry extends JavaPlugin implements Listener {
      * drops.
      */
     @EventHandler(ignoreCancelled = true)
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+    protected void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (!isInOverworld(event)) {
             return;
         }
 
         Entity entity = event.getEntity();
-        Location loc = entity.getLocation();
-        loc.getWorld().spigot().playEffect(loc, Effect.TILE_DUST, 214, 0, 0.5f, 0.5f, 0.5f, 0, 20, 32);
-
         if (isDisguised(entity)) {
+            Location loc = entity.getLocation();
+            loc.getWorld().spigot().playEffect(loc, Effect.TILE_DUST, 214, 0, 0.5f, 0.5f, 0.5f, 0, 20, 32);
+
             int lootingLevel = 0;
             boolean isPlayerAttack = false;
             if (event.getDamager() instanceof Player) {
@@ -251,9 +277,13 @@ public class IratePoultry extends JavaPlugin implements Listener {
      *
      * We use it to detect impending creeper explosions. The event is fired
      * immediately before the explosion.
+     * 
+     * NOTE: Neither ExplosionPrimeEvent nor EntityExplodeEvent coincides with
+     * the hiss of a creeper priming to explode. The two events occur in the
+     * listed order within one tick.
      */
     @EventHandler(ignoreCancelled = true)
-    public void onCreeperDetonate(ExplosionPrimeEvent event) {
+    protected void onCreeperDetonate(ExplosionPrimeEvent event) {
         if (!isInOverworld(event)) {
             return;
         }
@@ -271,11 +301,29 @@ public class IratePoultry extends JavaPlugin implements Listener {
 
     // ------------------------------------------------------------------------
     /**
+     * Show angry particles above creepers as a visual cue to compensate for
+     * DisguiseCraft blocking the creeper hiss prior to an explosion (unless I
+     * resort to NMS, which is a maintenance bugbear).
+     */
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    protected void onEntityTarget(EntityTargetEvent event) {
+        if (isInOverworld(event) && event.getEntity() instanceof Creeper) {
+            Creeper creeper = (Creeper) event.getEntity();
+            if (event.getReason() == TargetReason.FORGOT_TARGET) {
+                _creepers.remove(creeper);
+            } else {
+                _creepers.add(creeper);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    /**
      * On disguised mob death, de-register the disguise and do special drops if
      * a player hurt the mob recently.
      */
     @EventHandler(ignoreCancelled = true)
-    public void onEntityDeath(EntityDeathEvent event) {
+    protected void onEntityDeath(EntityDeathEvent event) {
         if (!isInOverworld(event)) {
             return;
         }
@@ -307,7 +355,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
      * arrow with an egg.
      */
     @EventHandler(ignoreCancelled = true)
-    public void onEntityShootBow(EntityShootBowEvent event) {
+    protected void onEntityShootBow(EntityShootBowEvent event) {
         if (!isInOverworld(event)) {
             return;
         }
@@ -327,7 +375,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
      * randomly spawn reinforcement mobs at the impact point.
      */
     @EventHandler(ignoreCancelled = true)
-    public void onProjectileHit(ProjectileHitEvent event) {
+    protected void onProjectileHit(ProjectileHitEvent event) {
         if (!isInOverworld(event)) {
             return;
         }
@@ -346,11 +394,31 @@ public class IratePoultry extends JavaPlugin implements Listener {
 
     // ------------------------------------------------------------------------
     /**
+     * Prevent blaze fireballs from igniting blocks in the overworld - it makes
+     * a mess.
+     */
+    @EventHandler(ignoreCancelled = true)
+    protected void onBlockIgnite(BlockIgniteEvent event) {
+        Entity entity = event.getIgnitingEntity();
+        if (entity.getWorld() != _overworld) {
+            return;
+        }
+
+        if (entity.getType() == EntityType.SMALL_FIREBALL) {
+            Fireball fireball = (Fireball) entity;
+            if (fireball.getShooter() instanceof Blaze) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    /**
      * Post-process death messages to replace hostile mob type names with a
      * coonfigurable mob name.
      */
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerDeath(PlayerDeathEvent event) {
+    protected void onPlayerDeath(PlayerDeathEvent event) {
         if (!isInOverworld(event)) {
             return;
         }
@@ -595,7 +663,8 @@ public class IratePoultry extends JavaPlugin implements Listener {
                type == EntityType.CREEPER ||
                type == EntityType.SPIDER ||
                type == EntityType.SKELETON ||
-               type == EntityType.ZOMBIE;
+               type == EntityType.ZOMBIE ||
+               type == EntityType.ZOMBIE_VILLAGER;
     }
 
     // ------------------------------------------------------------------------
@@ -794,6 +863,42 @@ public class IratePoultry extends JavaPlugin implements Listener {
 
     // ------------------------------------------------------------------------
     /**
+     * Return a random number in the range [-amplitude, +amplitude].
+     *
+     * @param amplitude the maximum positive or negative value.
+     * @return a random number in the range [-amplitude, +amplitude].
+     */
+    protected double scaledRandom(double amplitude) {
+        return random(-amplitude, amplitude);
+    }
+
+    // ------------------------------------------------------------------------
+    /**
+     * Show angry particles above the heads of creepers when they have targeted
+     * an entity.
+     * 
+     * This is to provide a visual warning to player about creepers, since they
+     * trigger silently and I can't seem to fix that without some NMS
+     * shenanigans. Remove Entities from the set when they are no longer valid
+     * (i.e. when the Entity no longer exists in the world).
+     */
+    protected void showCreeperEffects() {
+        final double PARTICLE_JITTER = 0.7;
+        Iterator<Creeper> it = _creepers.iterator();
+        while (it.hasNext()) {
+            Creeper creeper = it.next();
+            if (creeper.isValid() && creeper.getTarget() != null) {
+                Location loc = creeper.getLocation();
+                loc.add(scaledRandom(PARTICLE_JITTER), 0.6 + scaledRandom(PARTICLE_JITTER), scaledRandom(PARTICLE_JITTER));
+                loc.getWorld().playEffect(loc, Effect.VILLAGER_THUNDERCLOUD, 0, 64);
+            } else {
+                it.remove();
+            }
+        }
+    } // showEffects
+
+    // ------------------------------------------------------------------------
+    /**
      * Metadata name used to tag mobs disguised entities, including mobs.
      */
     protected static final String DISGUISED_KEY = "IratePoultry_Disguised";
@@ -846,4 +951,9 @@ public class IratePoultry extends JavaPlugin implements Listener {
      * Cached reference to the overworld.
      */
     protected World _overworld;
+
+    /**
+     * Set of Creeper instances displaying particles above their heads.
+     */
+    protected Set<Creeper> _creepers = new HashSet<>();
 } // class IratePoultry

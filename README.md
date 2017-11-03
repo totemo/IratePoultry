@@ -16,6 +16,10 @@ cases, these baby chickens are called "reinforcements" and these mobs cannot
 drop "special tier" custom drops (wishbone, stuffing, cranberry sauce and
 pumpkin pie).
 
+Since the hiss of a creeper preparing to explode is suppressed by the disguise
+plugin, creepers show the villager thundercloud particle above their heads as a
+warning to players.
+
 Various custom drops are given when a turkey (disguised mob) is killed. These
 are somewhat configurable, in terms of their drop chance, name and lore.  Certain
 custom drops are considered "special" ("high value") and can only be dropped if
@@ -35,7 +39,7 @@ Dependencies
 ------------
 
 You will need to install compatible versions of
-[Lib's Disguises](https://www.spigotmc.org/resources/libs-disguises.81/) and
+[Lib's Disguises](https://www.spigotmc.org/resources/libs-disguises.32453/) and
 [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/)
 to use IratePoultry.
 
