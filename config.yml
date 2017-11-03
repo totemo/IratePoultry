@@ -38,12 +38,12 @@ drops:
   feather:
     chance: 0.1
     name: "&eTurkey Feather"
-    lore: "&6Thanksgiving 2016"
+    lore: "&6Thanksgiving 2017"
 
   egg:
     chance: 0.05
     name: "&eTurkey Egg"
-    lore: "&6Thanksgiving 2016"
+    lore: "&6Thanksgiving 2017"
 
   corpse:
     chance: 0.05
@@ -51,27 +51,27 @@ drops:
       raw: "&eA Dead Angry Bird"
       cooked: "&eCooked Turkey"
 
-    lore: "&6Thanksgiving 2016|&oDon't let the turkeys get you down!"
+    lore: "&6Thanksgiving 2017|&oDon't let the turkeys get you down!"
 
   wishbone:
     chance: 0.025
     name: "&eWishbone"
-    lore: "&6Thanksgiving 2016|&oMake a wish!"
+    lore: "&6Thanksgiving 2017|&oMake a wish!"
 
   stuffing:
     chance: 0.05
     name: "&eStuffing"
-    lore: "&6Thanksgiving 2016|&oYou knocked the stuffing out of it!"
+    lore: "&6Thanksgiving 2017|&oYou knocked the stuffing out of it!"
 
   cranberry_sauce:
     chance: 0.01
     name: "&eCranberry Sauce"
-    lore: "&6Thanksgiving 2016|&oTime to hit the sauce!"
+    lore: "&6Thanksgiving 2017|&oTime to hit the sauce!"
 
   pumpkin_pie:
     chance: 0.05
     name: "&ePumpkin Pie"
-    lore: "&6Thanksgiving 2016|&oDessert!"
+    lore: "&6Thanksgiving 2017|&oDessert!"
 
 messages:
   turkey:
