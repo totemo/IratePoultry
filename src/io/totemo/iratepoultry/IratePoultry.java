@@ -307,8 +307,9 @@ public class IratePoultry extends JavaPlugin implements Listener {
      */
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     protected void onEntityTarget(EntityTargetEvent event) {
-        if (isInOverworld(event) && event.getEntity() instanceof Creeper) {
-            Creeper creeper = (Creeper) event.getEntity();
+        Entity entity = event.getEntity();
+        if (isInOverworld(event) && entity instanceof Creeper && isDisguised(entity)) {
+            Creeper creeper = (Creeper) entity;
             if (event.getReason() == TargetReason.FORGOT_TARGET) {
                 _creepers.remove(creeper);
             } else {
@@ -400,7 +401,7 @@ public class IratePoultry extends JavaPlugin implements Listener {
     @EventHandler(ignoreCancelled = true)
     protected void onBlockIgnite(BlockIgniteEvent event) {
         Entity entity = event.getIgnitingEntity();
-        if (entity.getWorld() != _overworld) {
+        if (entity == null || entity.getWorld() != _overworld) {
             return;
         }
 
